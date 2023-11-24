@@ -105,122 +105,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /books:
- *   get:
- *     summary: Get a list of books
- *     description: Retrieve a list of books.
- *     responses:
- *       200:
- *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Book'
- */
-
-app.get("/books", async (req, res) => {
-  try {
-    const { rows } = await pool.query("SELECT * FROM book");
-    res.json(rows);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-/**
- * @swagger
- * /books:
- *   post:
- *     summary: Create a new book
- *     description: Create a new book with the given name and price.
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Book'
- *     responses:
- *       201:
- *         description: Book created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
- *       500:
- *       description: Internal server error
- */
-
-app.post("/books", async (req, res) => {
-  const { name, price } = req.body;
-  try {
-    const { rows } = await pool.query(
-      "INSERT INTO book (name, price) VALUES ($1, $2) RETURNING *",
-      [name, price]
-    );
-    res.status(201).json(rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.get('/books/:bookId', async (req, res) => {
-  const bookId = req.params.bookId;
-
-  try {
-    const book = await pool.query('SELECT * FROM book WHERE id = $1', [bookId]);
-
-    if (book.rows.length === 0) {
-      return res.status(404).json({ error: 'Book not found' });
-    }
-
-    res.json(book.rows[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.put("/books/:id", async (req, res) => {
-  const bookId = req.params.id;
-  const { name, price } = req.body;
-  try {
-    const { rows } = await pool.query(
-      "UPDATE book SET name = $1, price = $2 WHERE id = $3 RETURNING *",
-      [name, price, bookId]
-    );
-    if (rows.length === 0) {
-      res.status(404).json({ error: "Book not found" });
-    } else {
-      res.json(rows[0]);
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-app.delete("/books/:id", async (req, res) => {
-  const bookId = req.params.id;
-  try {
-    const { rows } = await pool.query(
-      "DELETE FROM book WHERE id = $1 RETURNING *",
-      [bookId]
-    );
-    if (rows.length === 0) {
-      res.status(404).json({ error: "Book not found" });
-    } else {
-      res.json({ message: "Book deleted" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // Get all collections
 /**
  * @swagger
@@ -270,7 +154,7 @@ app.get('/collections', async (req, res) => {
       }
   
       // Get associated books for the collection
-      const books = await pool.query('SELECT b.* FROM book b INNER JOIN book__collection bc ON b.id = bc.bookId WHERE bc.collectionId = $1', [collectionId]);
+      const books = await pool.query('SELECT b.* FROM book b WHERE b.collectionid = $1', [collectionId]);
   
       const collectionWithBooks = {
         ...collection.rows[0],
@@ -307,6 +191,7 @@ app.get('/collections', async (req, res) => {
       if (rows.length === 0) {
         res.status(404).json({ error: 'Collection not found' });
       } else {
+        const books = await pool.query('DELETE FROM book WHERE collectionid = $1', [collectionId]);
         res.json({ message: 'Collection deleted' });
       }
     } catch (error) {
@@ -314,6 +199,93 @@ app.get('/collections', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+
+  app.get('/collections/:id/books', async (req, res) => {
+    const collectionId = req.params.id;
+    try {
+      const { rows } = await pool.query(
+        "SELECT * FROM book WHERE collectionid = $1",
+        [collectionId]
+      );
+      res.status(201).json(rows);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post('/collections/:id/books', async (req, res) => {
+    const collectionId = req.params.id;
+    const { name, price } = req.body;
+    try {
+      const { rows } = await pool.query(
+        "INSERT INTO book (name, price, collectionid) VALUES ($1, $2, $3) RETURNING *",
+        [name, price, collectionId]
+      );
+      res.status(201).json(rows[0]);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get('/collections/:id/books/:bookId', async (req, res) => {
+    const bookId = req.params.bookId;
+    const collectionId = req.params.id;
+  
+    try {
+      const book = await pool.query('SELECT * FROM book WHERE id = $1 AND collectionid = $2', [bookId, collectionId]);
+  
+      if (book.rows.length === 0) {
+        return res.status(404).json({ error: 'Book not found' });
+      }
+  
+      res.json(book.rows[0]);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+  
+  app.put("/collections/:id/books/:bookId", async (req, res) => {
+    const bookId = req.params.bookId;
+    const collectionId = req.params.id;
+    const { name, price } = req.body;
+    try {
+      const { rows } = await pool.query(
+        "UPDATE book SET name = $1, price = $2 WHERE id = $4 AND collectionid = $3 RETURNING *",
+        [name, price, collectionId, bookId]
+      );
+      if (rows.length === 0) {
+        res.status(404).json({ error: "Book not found" });
+      } else {
+        res.json(rows[0]);
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  app.delete("/collections/:id/books/:bookId", async (req, res) => {
+    const bookId = req.params.bookId;
+    const collectionId = req.params.id;
+    try {
+      const { rows } = await pool.query(
+        "DELETE FROM book WHERE id = $1 AND collectionid = $2 RETURNING *",
+        [bookId, collectionId]
+      );
+      if (rows.length === 0) {
+        res.status(404).json({ error: "Book not found" });
+      } else {
+        res.json({ message: "Book deleted" });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
 
 /**
  * @swagger
@@ -344,7 +316,7 @@ app.get('/orders', async (req, res) => {
   app.post('/orders', async (req, res) => {
     const { userId, date, totalCost } = req.body;
     try {
-      const { rows } = await pool.query('INSERT INTO "order" (userId, date, totalCost) VALUES ($1, $2, $3) RETURNING *', [userId, date, totalCost]);
+      const { rows } = await pool.query('INSERT INTO "order" (userid, date, totalCost) VALUES ($1, $2, $3) RETURNING *', [userId, date, totalCost]);
       res.status(201).json(rows[0]);
     } catch (error) {
       console.error(error);
@@ -363,14 +335,14 @@ app.get('/orders', async (req, res) => {
       }
   
       // Get associated books for the order
-      const books = await pool.query('SELECT b.* FROM book b INNER JOIN order__book ob ON b.id = ob.bookId WHERE ob.orderId = $1', [orderId]);
+      //const books = await pool.query('SELECT b.* FROM book b INNER JOIN order__book ob ON b.id = ob.bookId WHERE ob.orderId = $1', [orderId]);
   
       // Get associated collections for the order
       const collections = await pool.query('SELECT c.* FROM collection c INNER JOIN order__collection oc ON c.id = oc.collectionId WHERE oc.orderId = $1', [orderId]);
   
       const orderWithDetails = {
         ...order.rows[0],
-        books: books.rows,
+        //books: books.rows,
         collections: collections.rows,
       };
   
@@ -412,111 +384,7 @@ app.get('/orders', async (req, res) => {
     }
   });
 
-
-app.post('/collections/:collectionId/add-book/:bookId', async (req, res) => {
-    const collectionId = req.params.collectionId;
-    const bookId = req.params.bookId;
-  
-    try {
-      const collectionExists = await pool.query('SELECT 1 FROM collection WHERE id = $1', [collectionId]);
-      const bookExists = await pool.query('SELECT 1 FROM book WHERE id = $1', [bookId]);
-  
-      if (collectionExists.rows.length === 0 || bookExists.rows.length === 0) {
-        return res.status(404).json({ error: 'Collection or book not found' });
-      }
-  
-      const isBookInCollection = await pool.query('SELECT 1 FROM book__collection WHERE bookId = $1 AND collectionId = $2', [bookId, collectionId]);
-  
-      if (isBookInCollection.rows.length > 0) {
-        return res.status(409).json({ error: 'Book is already in the collection' });
-      }
-  
-      const result = await pool.query('INSERT INTO book__collection (bookId, collectionId) VALUES ($1, $2) RETURNING *', [bookId, collectionId]);
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-app.delete('/collections/:collectionId/remove-book/:bookId', async (req, res) => {
-    const collectionId = req.params.collectionId;
-    const bookId = req.params.bookId;
-  
-    try {
-      const collectionExists = await pool.query('SELECT 1 FROM collection WHERE id = $1', [collectionId]);
-      const bookExists = await pool.query('SELECT 1 FROM book WHERE id = $1', [bookId]);
-  
-      if (collectionExists.rows.length === 0 || bookExists.rows.length === 0) {
-        return res.status(404).json({ error: 'Collection or book not found' });
-      }
-  
-      const isBookInCollection = await pool.query('SELECT 1 FROM book__collection WHERE bookId = $1 AND collectionId = $2', [bookId, collectionId]);
-  
-      if (isBookInCollection.rows.length === 0) {
-        return res.status(404).json({ error: 'Book is not in the collection' });
-      }
-  
-      await pool.query('DELETE FROM book__collection WHERE bookId = $1 AND collectionId = $2', [bookId, collectionId]);
-      res.json({ message: 'Book removed from the collection' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-app.post('/orders/:orderId/add-book/:bookId', async (req, res) => {
-    const orderId = req.params.orderId;
-    const bookId = req.params.bookId;
-  
-    try {
-      const orderExists = await pool.query('SELECT 1 FROM "order" WHERE id = $1', [orderId]);
-      const bookExists = await pool.query('SELECT 1 FROM book WHERE id = $1', [bookId]);
-  
-      if (orderExists.rows.length === 0 || bookExists.rows.length === 0) {
-        return res.status(404).json({ error: 'Order or book not found' });
-      }
-  
-      const isBookInOrder = await pool.query('SELECT 1 FROM order__book WHERE bookId = $1 AND orderId = $2', [bookId, orderId]);
-  
-      if (isBookInOrder.rows.length > 0) {
-        return res.status(409).json({ error: 'Book is already in the order' });
-      }
-  
-      const result = await pool.query('INSERT INTO order__book (bookId, orderId) VALUES ($1, $2) RETURNING *', [bookId, orderId]);
-      res.status(201).json(result.rows[0]);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-app.delete('/orders/:orderId/remove-book/:bookId', async (req, res) => {
-    const orderId = req.params.orderId;
-    const bookId = req.params.bookId;
-  
-    try {
-      const orderExists = await pool.query('SELECT 1 FROM "order" WHERE id = $1', [orderId]);
-      const bookExists = await pool.query('SELECT 1 FROM book WHERE id = $1', [bookId]);
-  
-      if (orderExists.rows.length === 0 || bookExists.rows.length === 0) {
-        return res.status(404).json({ error: 'Order or book not found' });
-      }
-
-      const isBookInOrder = await pool.query('SELECT 1 FROM order__book WHERE bookId = $1 AND orderId = $2', [bookId, orderId]);
-  
-      if (isBookInOrder.rows.length === 0) {
-        return res.status(404).json({ error: 'Book is not in the order' });
-      }
-  
-      await pool.query('DELETE FROM order__book WHERE bookId = $1 AND orderId = $2', [bookId, orderId]);
-      res.json({ message: 'Book removed from the order' });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-app.post('/orders/:orderId/add-collection/:collectionId', async (req, res) => {
+app.post('/orders/:orderId/collections/:collectionId', async (req, res) => {
     const orderId = req.params.orderId;
     const collectionId = req.params.collectionId;
   
@@ -545,7 +413,7 @@ app.post('/orders/:orderId/add-collection/:collectionId', async (req, res) => {
   });
 
   // Remove a collection from an order
-app.delete('/orders/:orderId/remove-collection/:collectionId', async (req, res) => {
+app.delete('/orders/:orderId/collections/:collectionId', async (req, res) => {
     const orderId = req.params.orderId;
     const collectionId = req.params.collectionId;
   
@@ -576,7 +444,6 @@ app.delete('/orders/:orderId/remove-collection/:collectionId', async (req, res) 
 
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Start the Express server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
