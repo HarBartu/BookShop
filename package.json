@@ -2,8 +2,9 @@
   "name": "bookshop",
   "version": "1.0.0",
   "description": "Projekto tikslas – sukurti knygų pardavimo platformą.\r Veikimo principas – pačią kuriamą platformą sudarys dvi posistemės. Viena bus vartotojo, kuris perka knygas, peržiūri savo užsakymus. Kita pardavėjo sistema, kuri suteikia galimybę, kurti knygas, jų rinkinius ir jas pardavinėti sistemoje.\r Pardavėjas užsiregistruos į platformą. Sukurs knygas, iš jų sudarys rinkinius, nustatys jų kainas. Pirkėjai galės knygas peržiūrėti, sudaryti užsakymą ir jas nusipirkti.",
-  "main": "index.js",
+  "main": "index.mjs",
   "scripts": {
+    "start": "node index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -13,6 +14,7 @@
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.3",
