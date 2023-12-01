@@ -7,3 +7,11 @@ Sistemos sudedamosios dalys:
 
 •	Kliento pusė (ang. Front-End) – naudojant React.js;
 •	Serverio pusė (angl. Back-End) – naudojant Express.js. Duomenų bazė – PostgreSQL.
+
+Endpoint example http://express357712842.azurewebsites.net/api/session/login
+
+Deploy: 
+echo $DEPLOYMENTPASS
+ git checkout -b master
+ git commit -a -m "test"
+git push --set-upstream azure master
