@@ -1,4 +1,4 @@
-![image](https://github.com/HarBartu/BookShop/assets/109585255/f1f980f0-6bb5-403e-8d20-61df2346d049)# BookShop
+# BookShop
 ## T120B165 Saityno taikomųjų programų projektavimas
 ### Projekto „Egzaminavimo sistema“ ataskaita
 Studentas: Haroldas Bartusevičius, IFF-0/2
