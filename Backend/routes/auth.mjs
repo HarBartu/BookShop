@@ -54,12 +54,12 @@ router.post("/login", async (req, res) => {
     const userInfo = user.rows[0];
 
     const accessToken = signJWT(
-      { email: userInfo.email, role: userInfo.role },
-      "30s"
+      { email: userInfo.email, role: userInfo.role, id: userInfo.id },
+      "1h"
     );
 
     const refreshToken = signJWT(
-      { email: userInfo.email, role: userInfo.role },
+      { email: userInfo.email, role: userInfo.role, id: userInfo.id  },
       "1y"
     );
 
@@ -74,7 +74,7 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
     });
 
-    return res.status(200).send();
+    return res.status(200).send(accessToken);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });

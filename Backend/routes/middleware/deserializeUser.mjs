@@ -22,7 +22,7 @@ export function deserializeUser(req, res, next) {
   }
   const newAccessToken = signJWT(
     { email: refresh.email, role: refresh.role },
-    "30s"
+    "1h"
   );
 
   res.cookie("accessToken", newAccessToken, {

@@ -117,11 +117,11 @@ router.get("/collections/:id/books", async (req, res) => {
 
 router.post("/collections/:id/books", requireUser(["Admin", "Seller"]), async (req, res) => {
   const collectionId = req.params.id;
-  const { name, price } = req.body;
+  const { name, price, description } = req.body;
   try {
     const { rows } = await pool.query(
-      "INSERT INTO book (name, price, collectionid) VALUES ($1, $2, $3) RETURNING *",
-      [name, price, collectionId]
+      "INSERT INTO book (name, price, description, collectionid) VALUES ($1, $2, $3, $4) RETURNING *",
+      [name, price, description, collectionId]
     );
     res.status(201).json(rows[0]);
   } catch (error) {
@@ -154,11 +154,11 @@ router.get("/collections/:id/books/:bookId", async (req, res) => {
 router.put("/collections/:id/books/:bookId", requireUser(["Admin", "Seller"]), async (req, res) => {
   const bookId = req.params.bookId;
   const collectionId = req.params.id;
-  const { name, price } = req.body;
+  const { name, price, description } = req.body;
   try {
     const { rows } = await pool.query(
-      "UPDATE book SET name = $1, price = $2 WHERE id = $4 AND collectionid = $3 RETURNING *",
-      [name, price, collectionId, bookId]
+      "UPDATE book SET name = $1, price = $2, description = $3 WHERE id = $5 AND collectionid = $4 RETURNING *",
+      [name, price, description, collectionId, bookId]
     );
     if (rows.length === 0) {
       res.status(404).json({ error: "Book not found" });
@@ -192,6 +192,7 @@ router.delete("/collections/:id/books/:bookId", requireUser(["Admin", "Seller"])
 
 router.get("/orders", requireUser(["Admin", "Seller", "User"]), async (req, res) => {
   try {
+    console.log(req.user);
     const { rows } = await pool.query('SELECT * FROM "order"');
     res.json(rows);
   } catch (error) {
@@ -201,10 +202,11 @@ router.get("/orders", requireUser(["Admin", "Seller", "User"]), async (req, res)
 });
 
 router.post("/orders", requireUser(["Admin", "User"]), async (req, res) => {
-  const { userId, date, totalCost } = req.body;
+  const { date, totalCost } = req.body;
+  const userId = req.user.id
   try {
     const { rows } = await pool.query(
-      'INSERT INTO "order" (userid, date, totalCost) VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO "order" (userId, date, totalCost) VALUES ($1, $2, $3) RETURNING *',
       [userId, date, totalCost]
     );
     res.status(201).json(rows[0]);
@@ -253,8 +255,8 @@ router.put("/orders/:id", requireUser(["Admin"]), async (req, res) => {
   const { userId, date, totalCost } = req.body;
   try {
     const { rows } = await pool.query(
-      'UPDATE "order" SET userId = $1, date = $2, totalCost = $3 WHERE id = $4 RETURNING *',
-      [userId, date, totalCost, orderId]
+      'UPDATE "order" SET date = $1, totalCost = $2 WHERE id = $3 RETURNING *',
+      [date, totalCost, orderId]
     );
     if (rows.length === 0) {
       res.status(404).json({ error: "Order not found" });

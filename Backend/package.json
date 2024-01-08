@@ -4,7 +4,7 @@
   "description": "Projekto tikslas – sukurti knygų pardavimo platformą.\r Veikimo principas – pačią kuriamą platformą sudarys dvi posistemės. Viena bus vartotojo, kuris perka knygas, peržiūri savo užsakymus. Kita pardavėjo sistema, kuri suteikia galimybę, kurti knygas, jų rinkinius ir jas pardavinėti sistemoje.\r Pardavėjas užsiregistruos į platformą. Sukurs knygas, iš jų sudarys rinkinius, nustatys jų kainas. Pirkėjai galės knygas peržiūrėti, sudaryti užsakymą ir jas nusipirkti.",
   "main": "index.mjs",
   "scripts": {
-    "start": "cross-env-shell DEBUG=express:* node index.mjs",
+    "start": "node index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

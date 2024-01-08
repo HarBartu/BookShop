@@ -1,0 +1,81 @@
+-- Create the "book" table
+CREATE TABLE IF NOT EXISTS book (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+-- Create the "collection" table
+CREATE TABLE IF NOT EXISTS collection (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+-- Create the "book__collection" table
+CREATE TABLE IF NOT EXISTS book__collection (
+    id SERIAL PRIMARY KEY,
+    bookId INT NOT NULL,
+    collectionId INT NOT NULL,
+    FOREIGN KEY (bookId) REFERENCES book (id),
+    FOREIGN KEY (collectionId) REFERENCES collection (id)
+);
+
+-- Create the "user" table
+CREATE TABLE IF NOT EXISTS "user" (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    role VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+);
+
+-- Create the "order" table
+CREATE TABLE IF NOT EXISTS "order" (
+    id SERIAL PRIMARY KEY,
+    userId INT NOT NULL,
+    date DATE NOT NULL,
+    totalCost DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (userId) REFERENCES "user" (id)
+);
+
+-- Create the "order__book" table
+CREATE TABLE IF NOT EXISTS order__book (
+    id SERIAL PRIMARY KEY,
+    bookId INT NOT NULL,
+    orderId INT NOT NULL,
+    FOREIGN KEY (bookId) REFERENCES book (id),
+    FOREIGN KEY (orderId) REFERENCES "order" (id)
+);
+
+-- Create the "order__collection" table
+CREATE TABLE IF NOT EXISTS order__collection (
+    id SERIAL PRIMARY KEY,
+    collectionId INT NOT NULL,
+    orderId INT NOT NULL,
+    FOREIGN KEY (collectionId) REFERENCES collection (id),
+    FOREIGN KEY (orderId) REFERENCES "order" (id)
+);
+
+-- Insert sample data into "book" and "collection" tables
+INSERT INTO book (name, price) VALUES
+    ('Book 1', 19.99),
+    ('Book 2', 24.99),
+    ('Book 3', 14.99);
+
+INSERT INTO collection (name, price) VALUES
+    ('Collection 1', 49.99),
+    ('Collection 2', 39.99),
+    ('Collection 3', 29.99);
+
+-- Insert sample data into "user" table
+INSERT INTO "user" (name, role) VALUES
+    ('User 1', 'Customer'),
+    ('User 2', 'Admin'),
+    ('User 3', 'Customer');
+
+-- Insert sample data into "order" table
+INSERT INTO "order" (userId, date, totalCost) VALUES
+    (1, '2023-10-13', 44.97),
+    (2, '2023-10-14', 109.97),
+    (3, '2023-10-15', 74.97);
